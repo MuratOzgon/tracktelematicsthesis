@@ -1,5 +1,6 @@
 package com.example.tracktelematicsthesis.service;
 
+import com.example.tracktelematicsthesis.model.CarData;
 import com.example.tracktelematicsthesis.model.ObdData;
 import com.example.tracktelematicsthesis.model.User;
 import com.example.tracktelematicsthesis.repository.ObdDataRepository;
@@ -82,6 +83,31 @@ public class TTTService {
                 calculateScore(obdData);
             }
             return obdDataList;
+        } catch (IOException e) {
+            throw new RuntimeException("fail to parse CSV file: " + e.getMessage());
+        }
+    }
+
+    private List<CarData> csvToCarData(InputStream is) {
+        try (BufferedReader fileReader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+             CSVParser csvParser = new CSVParser(fileReader,
+                     CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim());) {
+            List<CarData> carDataList = new ArrayList<>();
+            Iterable<CSVRecord> csvRecords = csvParser.getRecords();
+            for (CSVRecord csvRecord : csvRecords) {
+                CarData carData = new CarData();
+                carData.setUserId(10);
+                carData.setDateTimeStr(csvRecord.get("Device Time"));
+                carData.setPoints(Double.parseDouble(csvRecord.get("Points")));
+                carData.setHeavyAccel("TRUE".equalsIgnoreCase(csvRecord.get("heavyAccel")));
+                carData.setHeavyDecel("TRUE".equalsIgnoreCase(csvRecord.get("heavyDecel")));
+                carData.setZigzagging("TRUE".equalsIgnoreCase(csvRecord.get("zigzagging")));
+
+                carDataList.add(carData);
+
+                //calculateScore(carData);
+            }
+            return carDataList;
         } catch (IOException e) {
             throw new RuntimeException("fail to parse CSV file: " + e.getMessage());
         }
