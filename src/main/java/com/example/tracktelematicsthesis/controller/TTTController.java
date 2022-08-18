@@ -1,8 +1,14 @@
 package com.example.tracktelematicsthesis.controller;
 
+import com.example.tracktelematicsthesis.controller.pojos.CarDataPojo;
+import com.example.tracktelematicsthesis.controller.pojos.UserDataPojo;
+import com.example.tracktelematicsthesis.model.CarData;
 import com.example.tracktelematicsthesis.model.ObdData;
 import com.example.tracktelematicsthesis.model.User;
 import com.example.tracktelematicsthesis.service.TTTService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,6 +53,23 @@ public class TTTController {
             return ResponseEntity.ok("");
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please upload a csv file!");
+    }
+
+    @PostMapping("/json")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<Object> uploadJson(@RequestBody String userData) throws JsonProcessingException {
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        UserDataPojo userDataPojo = objectMapper.readValue(userData, new TypeReference<UserDataPojo>(){});
+
+        service.saveFromJson(userDataPojo);
+
+        return ResponseEntity.ok("");
+    }
+
+    @GetMapping("/cardata")
+    public List<CarData> getAllCarData() {
+        return service.getAllCarData();
     }
 
     @GetMapping

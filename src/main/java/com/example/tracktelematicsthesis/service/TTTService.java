@@ -1,8 +1,13 @@
 package com.example.tracktelematicsthesis.service;
 
+import com.example.tracktelematicsthesis.controller.pojos.CarDataPojo;
+import com.example.tracktelematicsthesis.controller.pojos.UserDataPojo;
+import com.example.tracktelematicsthesis.model.AnalysisData;
 import com.example.tracktelematicsthesis.model.CarData;
 import com.example.tracktelematicsthesis.model.ObdData;
 import com.example.tracktelematicsthesis.model.User;
+import com.example.tracktelematicsthesis.repository.AnalysisRepository;
+import com.example.tracktelematicsthesis.repository.CarDataRepository;
 import com.example.tracktelematicsthesis.repository.ObdDataRepository;
 import com.example.tracktelematicsthesis.repository.UserRepository;
 import org.apache.commons.csv.CSVFormat;
@@ -10,6 +15,7 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
@@ -27,13 +33,15 @@ public class TTTService {
     ObdDataRepository dataRepository;
 
     @Autowired
+    CarDataRepository carDataRepository;
+
+    @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    AnalysisRepository analysisRepository;
+
     public static String TYPE = "text/csv";
-    static String[] HEADERS = { "GPS Time", "Device Time", "Longitude", "Latitude", "GPS Speed (Meters/second)",
-            "Horizontal Dilution of Precision", "Altitude", "Bearing", "G(x)", "G(y)", "G(z)", "G(calibrated)",
-            "Acceleration Sensor(Total)(g)", "Acceleration Sensor(Z axis)(g)", "Speed (OBD)(km/h)",
-            "Acceleration Sensor(X axis)(g)", "Acceleration Sensor(Y axis)(g)", "Average trip speed(whilst stopped or moving)(km/h)"};
 
 
     public void save(MultipartFile file) {
@@ -45,8 +53,60 @@ public class TTTService {
         }
     }
 
+    public void saveFromJson(UserDataPojo userDataPojo) {
+
+        if(!userRepository.existsByUserId(userDataPojo.getUserId())) {
+            userRepository.save(new User(userDataPojo.getUserId()));
+        }
+        User usr = userRepository.findUserByUserId(userDataPojo.getUserId());
+
+        List<AnalysisData> analysisDataList = new ArrayList<>();
+
+        userDataPojo.getAnalysis().forEach(analysisPojo -> {
+            AnalysisData analysisData = new AnalysisData(usr);
+            analysisData.setDateTime(analysisPojo.getDateTime());
+            analysisData.setPoints(analysisPojo.getPoints());
+            analysisData.setHeavyAccel(analysisPojo.isHeavyAccel());
+            analysisData.setHeavyDecel(analysisPojo.isHeavyDecel());
+            analysisData.setHighSpeed(analysisPojo.getHighSpeed());
+            analysisData.setZigzagging(analysisPojo.isZigzagging());
+            analysisRepository.save(analysisData);
+        });
+
+
+
+
+        User usr1 = userRepository.findUserByUserId(userDataPojo.getUserId());
+
+        analysisDataList = analysisRepository.findAll();
+
+        List<User> users = userRepository.findAll();
+
+        /*try {
+            List<CarData> carDataList = new ArrayList<>();
+            carDataPojoList.forEach(carDataPojo -> {
+                CarData carData = new CarData();
+                carData.setUserId("10");
+                carData.setDateTimeStr(carDataPojo.getDateTime());
+                carData.setPoints(carDataPojo.getPoints());
+                carData.setHeavyAccel(carDataPojo.isHeavyAccel());
+                carData.setHeavyDecel(carDataPojo.isHeavyDecel());
+                carData.setZigzagging(carDataPojo.isZigzagging());
+                carData.setHighSpeed(carDataPojo.getHighSpeed());
+                carDataList.add(carData);
+            });
+            carDataRepository.saveAll(carDataList);
+        } catch (Exception e) {
+            throw new RuntimeException("fail to store json data: " + e.getMessage());
+        }*/
+    }
+
     public List<ObdData> getAllTutorials() {
         return dataRepository.findAll();
+    }
+
+    public List<CarData> getAllCarData() {
+        return carDataRepository.findAll();
     }
 
     public List<User> getAllUsers() {
@@ -80,7 +140,7 @@ public class TTTService {
 
                 obdDataList.add(obdData);
 
-                calculateScore(obdData);
+                //calculateScore(obdData);
             }
             return obdDataList;
         } catch (IOException e) {
@@ -96,7 +156,7 @@ public class TTTService {
             Iterable<CSVRecord> csvRecords = csvParser.getRecords();
             for (CSVRecord csvRecord : csvRecords) {
                 CarData carData = new CarData();
-                carData.setUserId(10);
+                carData.setUserId("10");
                 carData.setDateTimeStr(csvRecord.get("Device Time"));
                 carData.setPoints(Double.parseDouble(csvRecord.get("Points")));
                 carData.setHeavyAccel("TRUE".equalsIgnoreCase(csvRecord.get("heavyAccel")));
@@ -112,14 +172,14 @@ public class TTTService {
             throw new RuntimeException("fail to parse CSV file: " + e.getMessage());
         }
     }
-
+/*
     private double calculateScore(ObdData data) {
         double score = Math.random();
         long userId = data.getUserId();
 
         if (!userRepository.existsById(userId)) {
             User newUser = new User();
-            newUser.setId(userId);
+            newUser.setUserId(userId);
             userRepository.save(newUser);
         }
 
@@ -132,5 +192,5 @@ public class TTTService {
         userRepository.save(userToUpdate);
 
         return score;
-    }
+    }*/
 }

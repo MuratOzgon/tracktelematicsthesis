@@ -9,14 +9,13 @@ import javax.persistence.*;
 @Table(name = "data")
 public class CarData {
     @Id
-    @Column(name = "id", nullable = false)
-    private Long id;
-
-    private long UserId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private String UserId;
 
     private String dateTimeStr;
     private double points;
     private boolean heavyAccel;
     private boolean heavyDecel;
     private boolean zigzagging;
+    private int highSpeed;
 }

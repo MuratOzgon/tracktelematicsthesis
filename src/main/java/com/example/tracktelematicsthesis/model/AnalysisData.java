@@ -1,6 +1,5 @@
 package com.example.tracktelematicsthesis.model;
 
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -11,7 +10,8 @@ import javax.persistence.*;
 @Getter
 @Entity
 @NoArgsConstructor
-public class LocationData {
+public class AnalysisData {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -20,12 +20,18 @@ public class LocationData {
     @JoinColumn(name = "userId")
     private User user;
 
-    private String dateTimeStr;
-    private double longitude;
-    private double latitude;
-    private double speed;
+    private String dateTime;
+    private double points;
+    private boolean heavyAccel;
+    private boolean heavyDecel;
+    private boolean zigzagging;
+    private int highSpeed;
 
-    public LocationData(Long id) {
+    public AnalysisData(Long id) {
         this.id = id;
+    }
+
+    public AnalysisData(User user) {
+        this.user = user;
     }
 }
